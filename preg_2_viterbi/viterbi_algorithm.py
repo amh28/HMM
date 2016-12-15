@@ -1,0 +1,143 @@
+import sys
+taglist=['O','I-GENE']
+pi_prob=[]
+tag_nos=[0.0,0.0]
+
+def main():
+	f=open('unigram','r')
+	RAREtag = get_rare_tag()
+	for line in f:
+		i=0
+		p=line.split()
+		while(i<2):
+			if(p[2]==taglist[i]):
+				c=float(p[0])
+				tag_nos[i]=tag_nos[i]+c
+				break
+			i=i+1
+	f.close()
+	
+	
+	f1=open('gene.dev','r') #test file
+	f2=open('viterbi.p2.out','w')#output file
+	k=0
+	w='*'
+	u='*'
+	prev=1
+	nos=0
+	for line2 in f1:
+		p=line2.split()
+		for ww in p:
+			line=ww
+			break
+		if(line2=='\n'):
+			k=0
+			w='*'
+			u='*'
+			prev=1
+			f2.write(line2)
+		else:
+			
+			#ITERATE THOUGH THE TAGLIST TO OBTAIN MAX_PROB
+			for v in taglist:
+		 		q=trigram(w,u,v)
+		 		e=emission(line,v)
+		 		cur=prev*q*e
+		 		pi_prob.append(cur)		
+		 	max_prob=max(pi_prob)
+		 	
+		 	
+		 	#MAX_PROB != 0
+		 	if (max_prob!=0):
+		 		index_v=pi_prob.index(max_prob)
+		 		#obtain tag in the max_prob index
+		 		x=line+' '+taglist[index_v]+'\n'
+		 		prev=max_prob
+		 		del pi_prob[:]
+		 		w=u
+		 		u=taglist[index_v]
+		 		f2.write(x)
+		 		nos=nos+1
+		 		
+		 		
+		 	#MAX_PROB == 0
+		 	else:
+		 		len1=len(line)
+				i=0
+				isnum=0
+				rtag = RAREtag
+				x=line+' '+rtag	+'\n'
+		 		#prev=1
+		 		del pi_prob[:]
+		 		w=u
+		 		u=rtag
+		 		f2.write(x)
+		 		nos=nos+1
+		 		
+		 	
+		 	
+		 	
+def get_rare_tag():
+	f5=open('unigram','r+')
+	frec_0 = 0
+	frec_gene = 0
+	for line in f5:
+		p=line.split()
+		if(p[3]=='_RARE_'):
+			if(p[2]=='0'):
+				frec_0 = p[0]
+			if(p[2]=='I-GENE'):
+				frec_gene = p[0]
+				
+	if(frec_0>frec_gene):
+		tag = "O"
+	else:
+		tag = "I-GENE" 
+	
+	return tag
+
+
+def trigram(w,u,v):
+	f3=open('trigram','r+')
+	f4=open('bigram','r+')
+	c2=0
+	c1=0
+	for line in f3:	
+		p=line.split()
+		if(p[2]==w and p[3]==u and p[4]==v):
+			c1=float(p[0])
+			break
+	for line in f4:	
+		p=line.split()
+		if(p[2]==w and p[3]==u):
+			c2=float(p[0])
+			break
+	if(c2!=0):
+		x=float(c1)/float(c2)
+		return x
+	else:
+		return 0
+	f3.close()
+	f4.close()
+	
+def emission(w,v):
+	f5=open('unigram','r+')
+	c1=0
+	for line in f5:
+		p=line.split()
+		if(p[3]==w and p[2]==v):
+			c1=float(p[0])
+		
+	i=taglist.index(v)
+	f5.close()
+	if(c1==0):
+		return 0.0
+	else:
+		x=float(c1)/tag_nos[i]		
+		return x
+	
+if __name__=='__main__':
+	main()	
+		 	
+		 
+		 
